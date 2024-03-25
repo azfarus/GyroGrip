@@ -19,11 +19,13 @@ TaskHandle_t SerialPrintTask;
 Vector accel , gyro , mag ,
        accel_filt , gyro_filt , mag_filt,
        gyro_offset; 
-float  alpha=0.05;
+float  alpha=0.0005;
 
 
 float roll , pitch , yaw;
-Matrix output;
+Matrix output , calib_orientation_inverse;
+Matrix dcm;
+Vector rpy;
 
 uint32_t start, end, looptime;
 
@@ -57,6 +59,8 @@ void setup()
         0,          /* Priority of the task */
         &SerialPrintTask, /* Task handle. */
         0);
+    
+    calculate_calib_orientation_inverse(&fabo_9axis , &calib_orientation_inverse);
 }
 
 void loop()
@@ -68,9 +72,10 @@ void loop()
 
     adjust_gyro_offset();
     apply_complementary_filter();
-
     cross_product_filter(&accel , &mag , &output);
+
     
+    dcm =   output * calib_orientation_inverse ;
 
    
     
@@ -97,9 +102,16 @@ void SerialPrintTaskFunc(void *parameter)
 {
     for (;;)
     {
+        calculate_euler_from_dcm(&dcm , &rpy);
 
-        output.print();
-        delayMicroseconds(1000);
+        // Serial.printf("%f %f %f %d\n",rpy.x *RAD_TO_DEG , rpy.y*RAD_TO_DEG ,rpy.z*RAD_TO_DEG , looptime);
+
+        dcm.row1.print();
+        dcm.row2.print();
+        dcm.row3.print();
+        Serial.println();
+
+        delay(50);
     }
 }
 
