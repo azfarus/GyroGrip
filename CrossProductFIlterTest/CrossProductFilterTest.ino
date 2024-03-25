@@ -12,7 +12,7 @@
 */
 
 #include <Wire.h>
-#include "madgwick.h"
+#include "CrossProductFIlter.h"
 #include <FaBo9Axis_MPU9250.h>
 
 
@@ -91,12 +91,6 @@ void loop()
 
 
 
-    MadgwickAHRSupdate( gx_fil,gy_fil,gz_fil,
-                        ax_fil,ay_fil,az_fil,
-                        mx_fil,my_fil,mz_fil,
-                        q0,q1,q2,q3);
-
-    quaternion_to_euler(q0,q1,q2,q3, &roll , &pitch , &yaw);
     
 
     end = micros();

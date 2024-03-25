@@ -1,0 +1,3 @@
+
+
+float invSqrt(float x);
