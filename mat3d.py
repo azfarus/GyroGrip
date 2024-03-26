@@ -50,7 +50,7 @@ def update_plot():
     rotation_matrix = np.reshape(rotation_values, (3, 3))
     
     # Apply transformation
-    cube_vertices_new = np.dot(cube_vertices, rotation_matrix)
+    cube_vertices_new = np.dot(cube_vertices, rotation_matrix.T)
     
     # Clear previous plot
     ax.clear()
@@ -71,7 +71,7 @@ plt.ion()
 while True:
     update_plot()
     plt.draw()
-    plt.pause(0.01)  # Adjust the pause time as needed
+    plt.pause(0.001)  # Adjust the pause time as needed
 
 # Disable interactive mode
 plt.ioff()
