@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import serial
+import  serial as srl
 import time
 
 # Initialize serial connection
-ser = serial.Serial('COM3', 115200)  # Adjust COM port and baudrate as needed
+
+ser = srl.Serial('COM5', 115200)  # Adjust COM port and baudrate as needed
 
 # Define a cube
 cube_vertices = np.array([

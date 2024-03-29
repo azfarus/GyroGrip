@@ -47,7 +47,10 @@ public:
         Serial.printf("%f %f %f ",x,y,z);
         return;
     }
-
+    float dot(Vector v){
+        return this->x*v.x + this->y*v.y + this->z*v.z;
+    }
+    
 
 
 
@@ -79,7 +82,7 @@ class Custom_Fabo9axis : public FaBo9Axis{
         readGyroXYZ  ( &gx , &gy , &gz );
 
         accel->set_vals(ax,ay,az);
-        mag->set_vals(mx,my,mz);
+        mag->set_vals(my,mx,-mz);
         gyro->set_vals(gx,gy,gz);
         return;
     }
@@ -127,6 +130,8 @@ public:
         return inv;
     }
 
+
+
     Matrix operator*(const Matrix& other) const {
         Matrix result;
         result.row1.x = row1.x * other.row1.x + row1.y * other.row2.x + row1.z * other.row3.x;
@@ -157,5 +162,7 @@ float invSqrt(float x);
 void cross_product_filter(Vector * accel , Vector * Mag , Matrix * output);
 void calculate_calib_orientation_inverse(Custom_Fabo9axis * mpu , Matrix *output);
 void calculate_euler_from_dcm(Matrix * dcm , Vector * rpy);
+Vector vec_into_mat(Vector * v , Matrix * m);
+
 
 

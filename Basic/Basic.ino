@@ -1,5 +1,6 @@
 #include <Wire.h>
-#include "CrossProductFIlter.h"
+#include "Vector.h"
+#include "Custom_fabo.h"
 
 
 
@@ -14,10 +15,7 @@ Vector accel , gyro , mag ,
 float  alpha=0.0005;
 
 
-float roll , pitch , yaw;
-Matrix output , calib_orientation_inverse;
-Matrix dcm;
-Vector rpy;
+
 uint32_t start, end, looptime;
 
 
@@ -40,25 +38,6 @@ void SerialPrintTaskFunc(void *parameter)
 {
     for (;;)
     {
-
-        Matrix m  = calib_orientation_inverse * output  ;
-        
-        // calculate_euler_from_dcm(&m,&rpy);
-        
-        m=m.inverse();
-        Vector v = Vector(0 ,0,1);
-        v = vec_into_mat(&v , &m );
-        Serial.printf("%f %f \n" , v.x , v.y );
-        
-        
-        // rpy.print();
-        // Serial.println();
-
-        // m.row1.print();
-        // m.row2.print();
-        // m.row3.print();
-        // Serial.println();
-
         delay(50);
     }
 }
@@ -95,14 +74,13 @@ void apply_complementary_filter()
 
 void setup()
 {
-    
+
     Serial.begin(115200);
     Serial.println("RESET");
     Serial.println();
 
     Serial.println("configuring device.");
     // Wire.begin();
-    //Wire.setTimeOut(5000);
 
     if (fabo_9axis.begin()){  
          
@@ -125,7 +103,6 @@ void setup()
         &SerialPrintTask, /* Task handle. */
         0);
     
-    calculate_calib_orientation_inverse(&fabo_9axis , &calib_orientation_inverse);
 }
 
 void loop()
@@ -137,10 +114,9 @@ void loop()
 
     adjust_gyro_offset();
     apply_complementary_filter();
-    cross_product_filter(&accel , &mag , &output);
 
     
-    //dcm =   output * calib_orientation_inverse ;
+
 
    
     

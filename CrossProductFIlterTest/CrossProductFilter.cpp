@@ -12,12 +12,11 @@ float invSqrt(float x) {
 
 
 void cross_product_filter(Vector * accel , Vector * mag , Matrix * output){
-    *accel *= (1.0f)/sqrtf(accel->squared_magnitude());
+    *accel *= (-1.0f)/sqrtf(accel->squared_magnitude());
     *mag *= (1.0f)/sqrtf(mag->squared_magnitude());
 
-    output->row2 = Vector::cross_product(accel  , mag);
-    output->row1 = Vector::cross_product( &output->row2  , accel);
-    *accel *= -1.0f;
+    output->row1 = Vector::cross_product(mag  , accel);
+    output->row2 = Vector::cross_product( accel, &output->row1 );
     output->row3 = (*accel);
     return;
 }
@@ -46,9 +45,9 @@ void calculate_calib_orientation_inverse(Custom_Fabo9axis * mpu , Matrix *output
 
 void calculate_euler_from_dcm(Matrix * dcm , Vector * rpy){
     float a = dcm->row1.x;
-    float b = dcm->row2.x;
-    float c = dcm->row3.x;
-    float d = dcm->row3.y;
+    float b = dcm->row1.y;
+    float c = dcm->row1.z;
+    float d = dcm->row2.z;
     float e = dcm->row3.z;
 
 
@@ -56,4 +55,9 @@ void calculate_euler_from_dcm(Matrix * dcm , Vector * rpy){
     rpy->y = -asinf(c);
     rpy->z = atan2f(b,a);
     return;
+}
+
+Vector vec_into_mat(Vector * v , Matrix * m){
+    Vector res = Vector( v->dot(m->row1) ,v->dot(m->row2) , v->dot(m->row3));
+    return res;
 }
