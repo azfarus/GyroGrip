@@ -1,117 +1,56 @@
-#include <Wire.h>
-#include "CrossProductFIlter.h"
+
+#include "CrossProductFilter.h"
+#include <BluetoothSerial.h>
 
 
 
 #define OFFSET_CALIB_ITR 2000
 
-Custom_Fabo9axis fabo_9axis;
-TaskHandle_t SerialPrintTask;
-
-Vector accel , gyro , mag ,
-       accel_filt , gyro_filt , mag_filt,
-       gyro_offset; 
-float  alpha=0.0005;
-
-
-float roll , pitch , yaw;
-Matrix output , calib_orientation_inverse;
-Matrix dcm;
-Vector rpy;
-uint32_t start, end, looptime;
 
 
 void calculate_gyro_offset();
 void adjust_gyro_offset();
 void init();
 void apply_complementary_filter();
-void SerialPrintTaskFunc(void *parameter);
-
-void init()
-{
-    calculate_gyro_offset();
-    adjust_gyro_offset();
-    accel_filt = accel;
-    gyro_filt = gyro;
-    mag_filt = mag;
-}
-
-void SerialPrintTaskFunc(void *parameter)
-{
-    for (;;)
-    {
-
-        Matrix m  = calib_orientation_inverse * output  ;
-        
-        // calculate_euler_from_dcm(&m,&rpy);
-        
-        m=m.inverse();
-        Vector v = Vector(0 ,0,1);
-        v = vec_into_mat(&v , &m );
-        Serial.printf("%f %f \n" , v.x , v.y );
-        
-        
-        // rpy.print();
-        // Serial.println();
-
-        // m.row1.print();
-        // m.row2.print();
-        // m.row3.print();
-        // Serial.println();
-
-        delay(50);
-    }
-}
-
-void calculate_gyro_offset()
-{
-
-    for (int i = 0; i < OFFSET_CALIB_ITR; i++)
-    {
-        fabo_9axis.readAccelXYZVector(&accel, &mag, &gyro);
-        gyro_offset = gyro_offset + gyro;
-    }
-    gyro_offset *= (1.0 / OFFSET_CALIB_ITR);
-}
-
-void adjust_gyro_offset()
-{
-    gyro -= gyro_offset;
-}
-
-void apply_complementary_filter()
-{
-    Vector::complementary_filter(&accel_filt, &accel, alpha);
-    Vector::complementary_filter(&gyro_filt, &gyro, alpha);
-    Vector::complementary_filter(&gyro_filt, &gyro, alpha);
-}
+void SerialPrintTaskFunc(void* parameter);
 
 
+MPU9250_Custom my_mpu;
+TaskHandle_t SerialPrintTask;
+BluetoothSerial SerialBT;
+
+Vector accel, gyro, mag,
+accel_filt, gyro_filt, mag_filt,
+gyro_offset;
+float  alpha = 0.25f;
 
 
+float roll, pitch, yaw;
+Matrix output, calib_orientation_inverse;
+Matrix dcm;
+Vector rpy;
+uint32_t start, end, looptime;
 
 
- 
+void setup() {
 
-void setup()
-{
-    
+    SerialBT.begin("ESP32test");
+    delay(1000);
+
     Serial.begin(115200);
     Serial.println("RESET");
     Serial.println();
 
     Serial.println("configuring device.");
-    // Wire.begin();
-    //Wire.setTimeOut(5000);
 
-    if (fabo_9axis.begin()){  
-         
-        Wire.setClock(800000);
+    Wire.begin();
+    Wire.setClock(800000);
+
+    if (my_mpu.setup(0x68)) {
         init();
-        Serial.println("configured FaBo 9Axis I2C Brick");
+        Serial.println("Configured MPU9250");
     }
-
-    else{
+    else {
         Serial.println("device error");
         while (1);
     }
@@ -124,29 +63,69 @@ void setup()
         0,          /* Priority of the task */
         &SerialPrintTask, /* Task handle. */
         0);
-    
-    calculate_calib_orientation_inverse(&fabo_9axis , &calib_orientation_inverse);
+        calculate_calib_orientation_inverse(&my_mpu, &calib_orientation_inverse);
 }
 
-void loop()
-{
+void loop() {
 
     start = micros();
 
-    fabo_9axis.readAccelXYZVector(&accel,&mag,&gyro);
+    my_mpu.readAccelXYZVector(&accel, &mag, &gyro);
 
     adjust_gyro_offset();
     apply_complementary_filter();
-    cross_product_filter(&accel , &mag , &output);
+    cross_product_filter(&accel_filt, &mag_filt, &output);
 
-    
-    //dcm =   output * calib_orientation_inverse ;
-
-   
-    
 
     end = micros();
     looptime = end - start;
+
 }
+
+
+
+void init() {
+    
+    calculate_gyro_offset();
+    adjust_gyro_offset();
+    accel_filt = accel;
+    gyro_filt = gyro;
+    mag_filt = mag;
+    
+}
+
+void SerialPrintTaskFunc(void* parameter) {
+    for (;;) {
+
+        Matrix m = calib_orientation_inverse * output;
+        m = m.inverse();
+        Vector v = Vector(0, 0, 1);
+        v = vec_into_mat(&v, &m);
+        SerialBT.printf("%f %f\n", v.x, v.y);
+        
+        delayMicroseconds(50000);
+    }
+}
+
+void calculate_gyro_offset() {
+
+    for (int i = 0; i < OFFSET_CALIB_ITR; i++) {
+        my_mpu.readAccelXYZVector(&accel, &mag, &gyro);
+        gyro_offset = gyro_offset + gyro;
+    }
+    gyro_offset *= (1.0 / OFFSET_CALIB_ITR);
+}
+
+void adjust_gyro_offset() {
+    gyro -= gyro_offset;
+}
+
+void apply_complementary_filter() {
+    Vector::complementary_filter(&accel_filt, &accel, alpha);
+    Vector::complementary_filter(&mag_filt, &mag, alpha);
+    Vector::complementary_filter(&gyro_filt, &gyro, alpha);
+}
+
+
 
 

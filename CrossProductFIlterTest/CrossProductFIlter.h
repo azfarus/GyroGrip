@@ -1,6 +1,7 @@
 
-#include <FaBo9Axis_MPU9250.h>
-
+#include <Arduino.h>
+#include<HardwareSerial.h>
+#include "MPU9250.h"
 
 class Vector {
 public:
@@ -9,6 +10,8 @@ public:
     // Constructor
     Vector(float x_val = 0.0, float y_val = 0.0, float z_val = 0.0)
         : x(x_val), y(y_val), z(z_val) {}
+
+   
 
     void operator*=(float scalar) {
         x *= scalar;
@@ -68,22 +71,33 @@ public:
     }
 };
 
-class Custom_Fabo9axis : public FaBo9Axis{
 
+
+class MPU9250_Custom {
     private:
-    float   ax,ay,az,
-            mx,my,mz,
-            gx,gy,gz; 
-    public: 
-    void readAccelXYZVector(Vector * accel , Vector * mag , Vector * gyro){
-        
-        readAccelXYZ ( &ax , &ay , &az );
-        readMagnetXYZ( &mx , &my , &mz );
-        readGyroXYZ  ( &gx , &gy , &gz );
 
-        accel->set_vals(ax,ay,az);
-        mag->set_vals(my,mx,-mz);
-        gyro->set_vals(gx,gy,gz);
+        MPU9250 mpu;
+
+    public: 
+
+    bool setup(uint8_t addr){
+        return mpu.setup(addr);
+    }
+
+
+
+    void readAccelXYZVector(Vector * accel , Vector * mag , Vector * gyro){
+        if (!mpu.available()) return;
+        mpu.update_accel_gyro();
+        mpu.update_mag();
+
+        accel->set_vals(-mpu.getAccX(),-mpu.getAccY(),-mpu.getAccZ());
+        mag->set_vals(mpu.getMagY(),mpu.getMagX(),-mpu.getMagZ());
+        gyro->set_vals(mpu.getGyroX(),mpu.getGyroY(),mpu.getGyroZ());
+
+        // mag->print();
+        // Serial.println();
+        
         return;
     }
 };
@@ -160,7 +174,7 @@ public:
 
 float invSqrt(float x);
 void cross_product_filter(Vector * accel , Vector * Mag , Matrix * output);
-void calculate_calib_orientation_inverse(Custom_Fabo9axis * mpu , Matrix *output);
+void calculate_calib_orientation_inverse(MPU9250_Custom * mpu , Matrix *output);
 void calculate_euler_from_dcm(Matrix * dcm , Vector * rpy);
 Vector vec_into_mat(Vector * v , Matrix * m);
 

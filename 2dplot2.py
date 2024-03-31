@@ -3,7 +3,7 @@ import pyqtgraph as pg
 from PyQt5.QtWidgets import QApplication
 
 # Open serial port
-ser = serial.Serial('COM5', 115200)  # Change baudrate to match your device
+ser = serial.Serial('COM6', 115200 , timeout=100.0)  # Change baudrate to match your device
 
 # Create a PyQtGraph application
 app = QApplication([])
