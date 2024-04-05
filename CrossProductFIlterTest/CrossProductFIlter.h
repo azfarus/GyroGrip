@@ -1,7 +1,7 @@
 
 #include <Arduino.h>
 #include<HardwareSerial.h>
-#include "MPU9250.h"
+#include <MPU9250.h>
 
 class Vector {
 public:
@@ -53,6 +53,10 @@ public:
     float dot(Vector v){
         return this->x*v.x + this->y*v.y + this->z*v.z;
     }
+
+    Vector operator*(float val){
+        return Vector(this->x*val,this->y*val,this->z*val);
+    }
     
 
 
@@ -93,9 +97,10 @@ class MPU9250_Custom {
 
         accel->set_vals(-mpu.getAccX(),-mpu.getAccY(),-mpu.getAccZ());
         mag->set_vals(mpu.getMagY(),mpu.getMagX(),-mpu.getMagZ());
-        gyro->set_vals(mpu.getGyroX(),mpu.getGyroY(),mpu.getGyroZ());
 
-        // mag->print();
+        gyro->set_vals( mpu.getGyroX()*DEG_TO_RAD ,mpu.getGyroY()*DEG_TO_RAD ,mpu.getGyroZ()*DEG_TO_RAD);
+
+        // gyro->print();
         // Serial.println();
         
         return;
@@ -108,6 +113,12 @@ public:
 
     Matrix(){
         row3 = row2 = row1 = Vector();
+    }
+
+    void operator=(const Matrix& other){
+        this->row1 = other.row1;
+        this->row2 = other.row2;
+        this->row3 = other.row3;
     }
     
     Matrix inverse() const {
@@ -159,6 +170,25 @@ public:
         result.row3.x = row3.x * other.row1.x + row3.y * other.row2.x + row3.z * other.row3.x;
         result.row3.y = row3.x * other.row1.y + row3.y * other.row2.y + row3.z * other.row3.y;
         result.row3.z = row3.x * other.row1.z + row3.y * other.row2.z + row3.z * other.row3.z;
+
+        return result;
+    }
+
+    Matrix operator+(const Matrix& other) const {
+        Matrix result;
+
+        result.row1 = this->row1 + other.row1;
+        result.row2 = this->row2 + other.row2;
+        result.row3 = this->row3 + other.row3;
+
+        return result;
+    }
+    Matrix operator*(float val) {
+        Matrix result;
+
+        result.row1 = this->row1 * val;
+        result.row2 = this->row2 * val;
+        result.row3 = this->row3 * val;
 
         return result;
     }

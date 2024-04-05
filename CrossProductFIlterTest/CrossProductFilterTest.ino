@@ -13,6 +13,7 @@ void adjust_gyro_offset();
 void init();
 void apply_complementary_filter();
 void SerialPrintTaskFunc(void* parameter);
+void make_angular_vel_tensor();
 
 
 MPU9250_Custom my_mpu;
@@ -22,12 +23,12 @@ BluetoothSerial SerialBT;
 Vector accel, gyro, mag,
 accel_filt, gyro_filt, mag_filt,
 gyro_offset;
-float  alpha = 0.25f;
+float  alpha = 1.0f;
 
 
 float roll, pitch, yaw;
-Matrix output, calib_orientation_inverse;
-Matrix dcm;
+Matrix output, calib_orientation_inverse , angular_vel_tensor;
+Matrix dcm , rot_mat;
 Vector rpy;
 uint32_t start, end, looptime;
 
@@ -63,7 +64,13 @@ void setup() {
         0,          /* Priority of the task */
         &SerialPrintTask, /* Task handle. */
         0);
-        calculate_calib_orientation_inverse(&my_mpu, &calib_orientation_inverse);
+    calculate_calib_orientation_inverse(&my_mpu, &calib_orientation_inverse);
+
+    rot_mat.row1 = Vector(1,0,0);
+    rot_mat.row2 = Vector(0,1,0);
+    rot_mat.row3 = Vector(0,0,1);
+
+
 }
 
 void loop() {
@@ -74,11 +81,18 @@ void loop() {
 
     adjust_gyro_offset();
     apply_complementary_filter();
+
+    make_angular_vel_tensor();
+
     cross_product_filter(&accel_filt, &mag_filt, &output);
 
 
     end = micros();
-    looptime = end - start;
+
+    rot_mat = rot_mat + angular_vel_tensor * ((end - start)*1e-6);
+
+    Matrix m = (calib_orientation_inverse * output).inverse();
+    rot_mat = rot_mat * (0.995f) + (m) *(0.005f);
 
 }
 
@@ -97,13 +111,12 @@ void init() {
 void SerialPrintTaskFunc(void* parameter) {
     for (;;) {
 
-        Matrix m = calib_orientation_inverse * output;
-        m = m.inverse();
+
         Vector v = Vector(0, 0, 1);
-        v = vec_into_mat(&v, &m);
-        SerialBT.printf("%f %f\n", v.x, v.y);
+        v = vec_into_mat(&v, &rot_mat);
+        Serial.printf("%f %f\n", v.x, v.y);
         
-        delayMicroseconds(50000);
+        delayMicroseconds(20000);
     }
 }
 
@@ -126,6 +139,18 @@ void apply_complementary_filter() {
     Vector::complementary_filter(&gyro_filt, &gyro, alpha);
 }
 
+void make_angular_vel_tensor(){
+    angular_vel_tensor.row1.x = 0.0f;
+    angular_vel_tensor.row1.y = gyro_filt.z;
+    angular_vel_tensor.row1.z = -gyro_filt.y;
 
+    angular_vel_tensor.row2.x = -gyro_filt.z;
+    angular_vel_tensor.row2.y = 0.0f;
+    angular_vel_tensor.row2.z = gyro_filt.x;
+
+    angular_vel_tensor.row3.x = gyro_filt.y;
+    angular_vel_tensor.row3.y = -gyro_filt.x;
+    angular_vel_tensor.row3.z = 0.0f;
+}
 
 

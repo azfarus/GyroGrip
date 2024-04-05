@@ -1,9 +1,11 @@
 import serial
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QApplication
+from collections import deque
+
 
 # Open serial port
-ser = serial.Serial('COM6', 115200 , timeout=100.0)  # Change baudrate to match your device
+ser = serial.Serial('COM5', 115200 , timeout=100.0)  # Change baudrate to match your device
 
 # Create a PyQtGraph application
 app = QApplication([])
@@ -18,8 +20,8 @@ win.setYRange(-1, 1)
 curve = win.plot([], [], pen='b')
 
 # Initialize empty lists to store data
-x_data = []
-y_data = []
+x_data = deque([] , maxlen=10)
+y_data = deque([] , maxlen=10)
 
 # Function to update plot data
 def update_plot(new_x, new_y):
