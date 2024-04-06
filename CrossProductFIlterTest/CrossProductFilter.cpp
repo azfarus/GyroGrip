@@ -21,7 +21,7 @@ void cross_product_filter(Vector * accel , Vector * mag , Matrix * output){
     return;
 }
 
-void calculate_calib_orientation_inverse(MPU9250_Custom * mpu , Matrix *output){
+void calculate_calib_orientation_inverse(MPU9250_Custom * mpu , Matrix *output , Vector  * calib){
     Vector accel_loc , mag_loc;
     Vector accel_inp , gyro_inp, mag_inp;
 
@@ -33,6 +33,8 @@ void calculate_calib_orientation_inverse(MPU9250_Custom * mpu , Matrix *output){
 
     accel_loc*=(1.0f / 1000);
     mag_loc*=(1.0f / 1000);
+
+    *calib = accel_loc;
 
     Matrix static_frame ;
 

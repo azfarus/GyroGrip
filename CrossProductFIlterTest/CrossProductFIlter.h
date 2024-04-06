@@ -204,9 +204,9 @@ public:
 
 float invSqrt(float x);
 void cross_product_filter(Vector * accel , Vector * Mag , Matrix * output);
-void calculate_calib_orientation_inverse(MPU9250_Custom * mpu , Matrix *output);
+void calculate_calib_orientation_inverse(MPU9250_Custom * mpu , Matrix *output , Vector * calib);
 void calculate_euler_from_dcm(Matrix * dcm , Vector * rpy);
-Vector vec_into_mat(Vector * v , Matrix * m);
+Vector vec_into_mat(Vector * v , Matrix * m );
 
 
 

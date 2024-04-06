@@ -20,7 +20,7 @@ MPU9250_Custom my_mpu;
 TaskHandle_t SerialPrintTask;
 BluetoothSerial SerialBT;
 
-Vector accel, gyro, mag,
+Vector accel, gyro, mag, v_calib,
 accel_filt, gyro_filt, mag_filt,
 gyro_offset;
 float  alpha = 1.0f;
@@ -56,6 +56,7 @@ void setup() {
         while (1);
     }
 
+    calculate_calib_orientation_inverse(&my_mpu, &calib_orientation_inverse , &v_calib);
     xTaskCreatePinnedToCore(
         SerialPrintTaskFunc,  /* Function to implement the task */
         "SerialPrintTask",  /* Name of the task */
@@ -64,7 +65,6 @@ void setup() {
         0,          /* Priority of the task */
         &SerialPrintTask, /* Task handle. */
         0);
-    calculate_calib_orientation_inverse(&my_mpu, &calib_orientation_inverse);
 
     rot_mat.row1 = Vector(1,0,0);
     rot_mat.row2 = Vector(0,1,0);
@@ -112,9 +112,9 @@ void SerialPrintTaskFunc(void* parameter) {
     for (;;) {
 
 
-        Vector v = Vector(0, 0, 1);
-        v = vec_into_mat(&v, &rot_mat);
-        Serial.printf("%f %f\n", v.x, v.y);
+
+        Vector v = vec_into_mat(&v_calib, &rot_mat);
+        Serial.printf("%f %f\n", v.z, v.y);
         
         delayMicroseconds(20000);
     }
