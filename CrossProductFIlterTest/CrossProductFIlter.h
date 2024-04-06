@@ -1,7 +1,7 @@
 
 #include <Arduino.h>
 #include<HardwareSerial.h>
-#include "MPU9250.h"
+#include <MPU9250.h>
 
 class Vector {
 public:
@@ -53,6 +53,10 @@ public:
     float dot(Vector v){
         return this->x*v.x + this->y*v.y + this->z*v.z;
     }
+
+    Vector operator*(float val){
+        return Vector(this->x*val,this->y*val,this->z*val);
+    }
     
 
 
@@ -93,9 +97,10 @@ class MPU9250_Custom {
 
         accel->set_vals(-mpu.getAccX(),-mpu.getAccY(),-mpu.getAccZ());
         mag->set_vals(mpu.getMagY(),mpu.getMagX(),-mpu.getMagZ());
-        gyro->set_vals(mpu.getGyroX(),mpu.getGyroY(),mpu.getGyroZ());
 
-        // mag->print();
+        gyro->set_vals( mpu.getGyroX()*DEG_TO_RAD ,mpu.getGyroY()*DEG_TO_RAD ,mpu.getGyroZ()*DEG_TO_RAD);
+
+        // gyro->print();
         // Serial.println();
         
         return;
@@ -108,6 +113,12 @@ public:
 
     Matrix(){
         row3 = row2 = row1 = Vector();
+    }
+
+    void operator=(const Matrix& other){
+        this->row1 = other.row1;
+        this->row2 = other.row2;
+        this->row3 = other.row3;
     }
     
     Matrix inverse() const {
@@ -163,6 +174,25 @@ public:
         return result;
     }
 
+    Matrix operator+(const Matrix& other) const {
+        Matrix result;
+
+        result.row1 = this->row1 + other.row1;
+        result.row2 = this->row2 + other.row2;
+        result.row3 = this->row3 + other.row3;
+
+        return result;
+    }
+    Matrix operator*(float val) {
+        Matrix result;
+
+        result.row1 = this->row1 * val;
+        result.row2 = this->row2 * val;
+        result.row3 = this->row3 * val;
+
+        return result;
+    }
+
     void print(){
         Serial.printf("%f %f %f\n",row1.x,row1.y,row1.z);
         Serial.printf("%f %f %f\n",row2.x,row2.y,row2.z);
@@ -174,9 +204,9 @@ public:
 
 float invSqrt(float x);
 void cross_product_filter(Vector * accel , Vector * Mag , Matrix * output);
-void calculate_calib_orientation_inverse(MPU9250_Custom * mpu , Matrix *output);
+void calculate_calib_orientation_inverse(MPU9250_Custom * mpu , Matrix *output , Vector * calib);
 void calculate_euler_from_dcm(Matrix * dcm , Vector * rpy);
-Vector vec_into_mat(Vector * v , Matrix * m);
+Vector vec_into_mat(Vector * v , Matrix * m );
 
 
 
