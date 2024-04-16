@@ -5,7 +5,7 @@ from collections import deque
 
 
 # Open serial port
-ser = serial.Serial('COM5', 115200 , timeout=100.0)  # Change baudrate to match your device
+ser = serial.Serial('COM6', 115200 , timeout=100.0)  # Change baudrate to match your device
 
 # Create a PyQtGraph application
 app = QApplication([])
@@ -24,10 +24,10 @@ x_data = deque([] , maxlen=10)
 y_data = deque([] , maxlen=10)
 
 # Function to update plot data
-def update_plot(new_x, new_y):
+def update_plot(new_x, new_y , color='b'):
     x_data.append(new_x)
     y_data.append(new_y)
-    curve.setData(x_data, y_data)
+    curve.setData(x_data, y_data, pen=color)
 
 # Main loop to continuously read data from serial port and plot
 def update():
@@ -36,8 +36,17 @@ def update():
         data = ser.readline().decode().strip()
         if data:
             try:
-                x, y= map(float, data.split())  # Assuming data is space-separated floats
-                update_plot(x, y)
+                x, y ,a ,b ,c ,d = map(float, data.split())  # Assuming data is space-separated floats
+                color = 'b'
+                if a==1 :
+                    color='r'
+                if b==1 :
+                    color='g'
+                if c==1 :
+                    color='y'
+                if d==1 :
+                    color='m'
+                update_plot(x, -y , color)
             except ValueError:
                 print("Invalid data received:", data)
 
