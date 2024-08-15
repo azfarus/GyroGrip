@@ -34,7 +34,7 @@ BluetoothSerial SerialBT;
 Vector accel, gyro, mag, v_calib,
 accel_filt, gyro_filt, mag_filt,
 gyro_offset;
-float  alpha = 1.0f;
+float  alpha = 0.05f;
 
 
 float roll, pitch, yaw;
